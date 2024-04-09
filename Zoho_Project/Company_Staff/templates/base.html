@@ -341,17 +341,18 @@
                 </a>
                 <hr>
                 {% endif %}
-               
-                <a href="" class="d-flex align-items-center gap-2 dropdown-item">
+
+                {% if allmodules.payment_received == 1  %}
+                <a href="{% url 'payment_listout' %}" class="d-flex align-items-center gap-2 dropdown-item">
                  
                   <div class="d-flex">
                     <p class="mb-0 fs-3">Payment Received</p>
-                    <a href="{% url 'payment_listout' %}"><i class="fa fa-plus text-white" ></i></a>
+                    <a href="{% url 'new_payment' %}"><i class="fa fa-plus text-white" ></i></a>
                   </div>
                   
                 </a>
                 <hr>
-             
+                {% endif %}
                 {% if allmodules.delivery_challan == 1  %}
                 <a href="" class="d-flex align-items-center gap-2 dropdown-item">
                   

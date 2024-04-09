@@ -491,7 +491,15 @@ urlpatterns = [
 
 
     #########################PAYMENT RECIEVED ##################################Devika---------------------------------->
-    path('Company/payment_listout', views.payment_listout, name='payment_listout'),
+    path('zohomodules/payment_recieved/payment_listout', views.payment_listout, name='payment_listout'),
+    path('zohomodules/payment_recieved/new_payment', views.new_payment, name='new_payment'),
+
+
+
+
+
+
+
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)

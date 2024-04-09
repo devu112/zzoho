@@ -20311,7 +20311,11 @@ def getNextRINumber(recInv):
     return nxtRecInv
 
 def payment_listout(request):
-    return render(request,'company/payment_listout.html')
+    return render(request,'zohomodules/payment_recieved/payment_listout.html')
+
+
+def new_payment(request):
+    return render(request,'zohomodules/payment_recieved/new_payment.html')    
 
 # < -------------------- > Recurring Invoice - End < ------------------------------->
 
