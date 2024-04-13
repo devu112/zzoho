@@ -361,7 +361,7 @@
                   <div class="col-md-6 mt-2">
                     <div class="row">
                       <div class="col-md-3">
-                        <label for="" class="labels" >Invoice No.</label>
+                        <label for="" class="labels" >Payment Recieved No.</label>
                       </div>
                       <div class="col-md-9">
                         <input type="text" class="form-control bg-black text-white" name="rec_invoice_no"  id="recInvoiceNumber" placeholder="{{invNo}}" required>
@@ -383,7 +383,7 @@
                 <div class="row">
                   <div class="col-md-6 mt-2">
                     <div class="row">
-                      <label for="" class="col-md-3 labels">Start Date</label>
+                      <label for="" class="col-md-3 labels">Payment Date</label>
                       <div class="col-md-9">
                         <input type="date" class="form-control bg-black text-white" id="startDate" name="start_date" value="{% now 'Y-m-d' %}">
                       </div>
@@ -392,7 +392,7 @@
   
                   <div class="col-md-6 mt-2">
                     <div class="row">
-                      <label for="" class="col-md-3 labels">Terms</label>
+                      <label for="" class="col-md-3 labels">Payment Method</label>
                       <div class="col-md-9">
                         <div class="d-flex">
                           <select class="form-control bg-black text-white" name="payment_term" id="paymentTerm" required>
@@ -408,61 +408,7 @@
                   </div>
                 </div>
 
-                <div class="row">
-                  <div class="col-md-6 mt-2">
-                    <div class="row">
-                      <label for="" class="col-md-3 labels">End Date</label>
-                      <div class="col-md-9">
-                        <input type="text" id="endDate" class="form-control bg-black text-white" name="end_date" readonly>
-                      </div>
-                    </div>
-                  </div>
-  
-                  <!-- <div class="col-md-6 mt-2">
-                    <div class="row">
-                      <label for="" class="col-md-3 labels">Repeat Every</label>
-                      <div class="col-md-9">
-                        <div class="d-flex">
-                          <select class="form-control bg-black text-white" name="repeat_every" id="repeatEvery" required>
-                            <option value="" selected> Select Repeat Duration</option>
-                            {% for r in repeat %}
-                                <option value="{{r.id}}">{{r.repeat_every}}</option>
-                            {% endfor %}
-                        </select>
-                        <a class="btn btn-outline-warning ms-1" role="button" data-target="#newRepeatEvery" data-toggle="modal" id="addRepeatEvery">+</a>
-                      </div>
-                      </div>
-                    </div>
-                  </div>
-                </div> -->
-
-                <!-- <div class="row">
-                  <div class="col-md-6 mt-2">
-                    <div class="row">
-                      <label for="" class="col-md-3 labels">Order No.</label>
-                      <div class="col-md-9">
-                        <input class="form-control bg-black text-white" type="text" name="order_number" id="orderNum">
-                      </div>
-                    </div>
-                  </div> -->
-  
-                  <div class="col-md-6 mt-2">
-                    <div class="row">
-                      <label for="" class="col-md-3 labels">Payment Type</label>
-                      <div class="col-md-9">
-                        <select class="form-control bg-black text-white" id="paymentMethod" name="payment_method">
-                          <option value="" selected>Select Payment Method</option>
-                          <option value="Cash">Cash</option>
-                          <option value="Cheque">Cheque</option>
-                          <option value="UPI">UPI</option>
-                          {% for b in banks %}
-                          <option value="{{b.bnk_name}}" text="{{b.id}}">{{b.bnk_name}} (XXX{{ b.bnk_acno|slice:"-4:" }})</option>
-                          {% endfor %}
-                      </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+             
 
                 <div class="row">
                   <div class="col-md-6 mt-2">
@@ -498,36 +444,56 @@
                   <div class="col-md-6 mt-2"></div>
                 </div>
 
-                <div class="row mt-2" id="applyPriceListSection">
-                  <div class="col-md-6">
-                      <div class="form-group form-check">
-                          <input type="checkbox" class="form-check-input" name="priceList" id="applyPriceList" value="applyPriceList">
-                          <label class="form-check-label labels" for="applyPriceList">Apply Price List</label>
-                          <br>
-                          <span class="text-success" id="custPriceListName" style="display: none;"></span>
-                      </div>
-                  </div>
-                  <div class="col-md-6"></div>
-              </div>
-              <div class="row mt-2">
-                <div class="col-md-6" id="priceListDropdown" style="display: none;">
-                  <div class="row">
-                    <div class="col-md-3">
-                      <label class="labels">Price List</label>
-                    </div>
-                    <div class="col-md-9">
-                      <select class="form-control bg-black text-white" id="priceListIds" name="price_list_id" style="background-color: #43596c;">
-                          <option value="">Choose Price List</option>
-                          {% for p in priceListItems %}
-                          <option value="{{p.id}}">{{p.name}}</option>
-                          {% endfor %}
-                      </select>
-                      <span class="text-danger" id="custPriceListAlert" style="display: none;"></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <div class="row clearfix">
+                    <div class="col-md-12 table-responsive-md">
+                        <table class="table table-bordered table-hover" id="tab_logic">
+                            <thead>
+                            <tr>
+                                <th class="text-center" style="color: white;"> #</th>
+                                <th class="text-center" style="color: white;"> Date</th>
+                                <th class="text-center" style="color: white;">Due Date</th>
+                                <th class="text-center" style="color: white;"> Invoice Type</th>
+                                <th class="text-center"  style="color: white;"> Invoice Number</th>
+                                <th class="text-center"  style="color: white;"> Invoice Amount</th>
+                                <th class="text-center" style="color: white;"> Payment</th>
+                                <th class="text-center"style="color: white;"> Balance</th>
 
+                            </tr>
+                            </thead>
+                            <!-- <tbody id='customerdata'>
+                               
+                            </tbody> -->
+                            <tbody id='invoicedata'>
+                               
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-7"></div>
+                    <div class="col-md-5 table-responsive-md mt-3 " id="tab_logic_total" style="background-color:rgba(0,0,0,.4); border: 1px solid rgba(128, 128, 128, 0.6); margin-left: -2vh;">
+                        <div class="p-3">
+                            <div class="row container-fluid p-2 m-0">
+                                <div class="col-sm-4 mt-2"><label for="a" class="text-center">Total Amount</label></div>
+                                <div class="col-sm-1 mt-2">:</div>
+                                <div class="col-sm-7 mt-2"><input type="number" name='tamount' id="tamount" min="0" step="any" placeholder='0.00' class="form-control" style="background-color: #43596c; color: white;" readonly></div>
+                            </div>
+                            <div class="row container-fluid p-2 m-0" >
+                                <div class="col-sm-4 mt-2"><label for="a" class="text-center">Total Payment</label></div>
+                                <div class="col-sm-1 mt-2">:</div>
+                                <div class="col-sm-7 mt-2"><input type="number" min="0" step="any" name='tpayment' id="tpayment" placeholder='0.00' class="form-control" style="background-color: #43596c; color: white;" readonly></div>
+                            </div>
+
+                            <div class="row container-fluid p-2 m-0">
+                                <div class="col-sm-4 mt-2"><label for="a" class="text-center">Total Balance</label></div>
+                                <div class="col-sm-1 mt-2">:</div>
+                                <div class="col-sm-7 mt-2"><input type="number" min="0" step="any" name='tbalance' id="tbalance" placeholder='0.00' class="form-control" style="background-color: #43596c; color: white;" readonly></div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
 
 
 
@@ -2018,5 +1984,77 @@
             $('#newCustomerPaymentTerm').modal('toggle');
         }
     }
-  </script>             
+  </script>       
+  
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function getCustomerInvoice(customerId) {
+        if (customerId !== "0") {
+            $.ajax({
+                type: "POST",
+                url: "{% url 'fetch_invoice_data' %}",
+                data: {
+                    'customer': customerId,
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val(),
+                },
+                success: function (data) {
+                    console.log(data);
+                    $('#invoicedata').empty();
+                    var invdata = JSON.parse(data);
+                    var totalAmount = 0;
+                    var totalBalance = 0;
+                    var totalPayment = 0; // New variable to store total payment
+                    console.log(totalPayment)
+                    for (key in invdata) {
+                        totalAmount += parseFloat(invdata[key]['inv_amount']);
+                        totalBalance += parseFloat(invdata[key]['inv_balance']);
+                        totalPayment += parseFloat(invdata[key]['inv_payment']); // Summing up invoice payments
+                        console.log(totalBalance)
+                        console.log(totalPayment)
+                        $('#invoicedata').append(
+                            `
+                            <tr id='addr${parseInt(key) + 1}' style="height:6rem;">
+                                <td>${parseInt(key) + 1}</td>
+                                <td style="position: relative;"><input type="text" readonly name="inv_date[]" id="" value="${formatDate(invdata[key]['date'])}" class="form-control" style="background-color: #43596c; color: white;" />  </td>
+                                <td><input type="text" readonly name='duedate[]' id="duedate_${key}" value="${formatDate(invdata[key]['date'])}" class="form-control" style="background-color: #43596c; color: white;" /></td>
+                                <td><input type="text" readonly name='inv_type[]' id="" value="${invdata[key]['inv_type']}" class="form-control" style="background-color: #43596c; color: white;" /></td>                                
+                                <td><input type="text" readonly name='trans_no[]' value="${invdata[key]['trans_no']}" id="" class="form-control" style="background-color: #43596c; color: white;" /></td>
+                                <td><input type="number" readonly name='inv_amount[]' id="inv_amount${parseInt(key) + 1}" value="${invdata[key]['inv_amount']}" class="form-control" style="background-color: #43596c; color: white;" /></td>
+                                <td><input type="number" readonly name='inv_payment[]' id="inv_payment${parseInt(key) + 1}" value="${invdata[key]['inv_payment']}" class="form-control" style="background-color: #43596c; color: white;" /></td>
+                                <td><input type="number" readonly name='inv_balance[]' id="inv_balance${parseInt(key) + 1}" value="${invdata[key]['inv_balance']}" class="form-control" style="background-color: #43596c; color: white;" /></td>
+                            </tr>
+                            `
+                        );
+                    }
+                    // Set total amount, total balance, and total payment in their respective input boxes
+                    $('#tamount').val(totalAmount.toFixed(2));
+                    $('#tbalance').val(totalBalance.toFixed(2));
+                    $('#tpayment').val(totalPayment.toFixed(2)); 
+                    console.log('tpayment')
+                }
+            });
+        }
+    }
+    
+    $(document).ready(function () {
+        $('#customer').on('change', function () {
+            var customerId = $(this).val(); // Get selected customer ID
+            console.log(customerId); // Log the customer ID to verify
+            getCustomerInvoice(customerId); // Call the function to fetch customer invoices
+        });
+    });
+    
+        function formatDate(dateString) {
+            // Parse the input string as a date
+            var date = new Date(dateString);
+            // Get year, month, and day components
+            var year = date.getFullYear();
+            var month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed, so we add 1
+            var day = date.getDate().toString().padStart(2, '0');
+            // Return formatted date in YYYY/MM/DD format
+            return `${year}-${month}-${day}`;
+        }
+       
+        </script>
 {% endblock %}

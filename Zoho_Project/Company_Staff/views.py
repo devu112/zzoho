@@ -20317,5 +20317,9 @@ def payment_listout(request):
 def new_payment(request):
     return render(request,'zohomodules/payment_recieved/new_payment.html')    
 
-# < -------------------- > Recurring Invoice - End < ------------------------------->
+
+def payment_view(request):
+    return render(request,'zohomodules/payment_recieved/payment_view.html')       
+
+
 
