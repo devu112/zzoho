@@ -1207,3 +1207,43 @@ class SaleOrder(models.Model):
         return 'sales_order_number'
         
 #End
+
+
+#----------------------- PAYMENT RECIEVED ----------------------------------------------------#
+
+class Payment_recieved(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details=models.ForeignKey(LoginDetails,on_delete=models.CASCADE)
+    customer=models.ForeignKey(Customer,on_delete=models.CASCADE,null=True)
+    customer_email=models.EmailField(max_length=220,null=True,blank=True)
+    customer_billingaddress=models.CharField(max_length=220,null=True,blank=True)
+    customer_GSTtype=models.CharField(max_length=220,null=True,blank=True)
+    customer_GSTnumber=models.CharField(max_length=220,null=True,blank=True)
+    customer_place_of_supply=models.CharField(max_length=220,null=True,blank=True)
+    payment_date = models.DateField(null=True)
+    reference_number=models.IntegerField(blank=True,null=True,)
+    payment_number=models.IntegerField(blank=True,null=True,)
+    payment_method = models.CharField(max_length=220,null=True,blank=True)
+    cheque_number = models.CharField(max_length=220,null=True,blank=True)
+    upi_id =models.CharField(max_length=220,null=True,blank=True)
+    bank_account_number = models.CharField(max_length=255, blank=True, null=True)
+    amount_to_apply = models.FloatField(default=0.0, null=True, blank=True)
+    amount_to_credit = models.FloatField(default=0.0, null=True, blank=True)
+    status = models.CharField(max_length=255,null=True,blank=True)  
+
+
+class Payment_details(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details=models.ForeignKey(LoginDetails,on_delete=models.CASCADE)
+    payment_recieved=models.ForeignKey(Payment_recieved,on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
+    payment=models.IntegerField(blank=True,null=True,)
+    invoice_amount =models.IntegerField(blank=True,null=True,)
+    invoice_number=models.CharField(max_length=220,null=True,blank=True)
+    invoice_type=models.CharField(max_length=220,null=True,blank=True)
+    Due_Date = models.DateField(null=True)
+    Date=models.DateField(null=True)  
+
+
+
+
