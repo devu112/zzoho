@@ -494,6 +494,8 @@ urlpatterns = [
     path('zohomodules/payment_recieved/payment_listout', views.payment_listout, name='payment_listout'),
     path('zohomodules/payment_recieved/new_payment', views.new_payment, name='new_payment'),
     path('zohomodules/payment_recieved/payment_view', views.payment_view, name='payment_view'),
+    path('zohomodules/payment_recieved/getCustomers1',views.getCustomers1, name='getCustomers1'),
+    path('zohomodules/payment_recieved/createInvoiceCustomer1',views.createInvoiceCustomer1, name='createInvoiceCustomer1'),
 
 
 

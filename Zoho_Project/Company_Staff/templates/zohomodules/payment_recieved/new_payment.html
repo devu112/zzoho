@@ -251,7 +251,7 @@
             <div class="card mb-5 px-3 py-4" style="background-color: black; border-radius: 1vh;">
               <h1 class="mb-0 text-uppercase text-right" style="color: white; font-weight: bolder;">PAYMENT RECIEVED</h1><br>
               <hr class="text-warning">
-              <form action="{% url 'createInvoice' %}" method="post" enctype="multipart/form-data"id="myForm" onsubmit="return validateForm()">
+              <form action="{% url 'create_payment' %}" method="post" enctype="multipart/form-data"id="myForm" onsubmit="return validateForm()">
                 {% csrf_token %}
                 <div class="row">
                   <div class="col-md-3">
@@ -1867,7 +1867,7 @@
       if(fName != "" && lName != "" && placeSupply != "" && gstType != "" && panNo != "" && Email != "" && Mob != "" && street != "" && city != "" && state != "" && pin != "" && country != "" && tax_ref != undefined){
             $.ajax({
                 type : 'POST',
-                url:"{% url 'createInvoiceCustomer' %}",
+                url:"{% url 'createInvoiceCustomer1' %}",
                 data:{
                   'type': type,
                   'salutation' : title,
@@ -1947,7 +1947,7 @@
     function reloadCustomer(title,fName,lName) {
         const fullName = title+' '+fName+' '+lName
         $.ajax({
-            url: "{% url 'getCustomers' %}",
+            url: "{% url 'getCustomers1' %}",
             type: "GET",
             dataType: "json",
             data: {},
@@ -1989,4 +1989,135 @@
   
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+  <div class="modal fade" id="newPaymentTerm">
+    <div class="modal-dialog modal-md">
+    <div class="modal-content" style="background: rgb(32, 35, 37);border-radius: 20px;">
+        <div class="modal-header px-3" style="background: rgb(32, 35, 37);">
+            <h3 class="text-uppercase" style="color: white;">Add Payment Term</h3>
+            <button type="button" class="close btn btn-danger" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body" style="background: rgb(32, 35, 37);">
+        <div class="card px-2 py-4" style="background-color: #141414a2;">
+            <form action="" method="post" class="needs-validation" novalidate autocomplete="off" id="newTermForm">
+            
+            <div class="row mt-2">
+  
+                <div class="col-lg-12 col-md-12 col-sm-12 mt-2">
+                    <label for="termname" style="color: white">Term Name *</label>
+  
+                  <input type="text " class="form-control text-dark bg-light mt-2" id="termName" name="term_name" autocapitalize="characters" required> 
+                  <span id="message-id" class="mt-1 text-danger" style="font-size: 10px;"></span> 
+                  <span id="success-message-id" class=" mt-1 text-success" style="font-size: 10px;"></span>    
+                </div>
+  
+                <div class="col-lg-12 col-md-12 col-sm-12 mt-2">
+                      <label for="termdays" style="color: white">Number of Days *</label>
+  
+                  <input type="number" class="form-control text-dark bg-light mt-2" id="termDays" name="term_days" autocapitalize="characters" required>
+                  </div>
+                  <div class="col-md-2 mt-2"></div>
+  
+              </div>
+            
+                  <div class="row mt-5">
+                    <div class="col-lg-12 col-md-12 col-sm-12">
+                      <div class="d-flex">
+                        <button class="btn save_btn rounded-pill text-grey w-50 my-1 mx-1 btn-outline-warning "
+                        type="submit" data-dismiss="modal" id="savePaymentTerm">Save
+                        </button> 
+                        
+  
+                        <button type="button" class="close btn save_btn rounded-pill text-grey w-50 my-1 mx-1 btn-outline-warning" 
+                        data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">Cancel</span>
+                        </button>
+                      </div>
+                    </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+    </div>  
+  </div>
+
+
+<!-- payment scripts -->
+<script>
+$(document).on("click","#savePaymentTerm",function(){
+    var trm = $('#termName').val();
+    var dys = $("#termDays").val();
+    if (trm !="" && dys !=""){
+        $.ajax({
+            type : 'POST',
+            url:"{% url 'newinvPaymentTerm' %}",
+            data:{
+                'term' : trm,
+                'days' : dys,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            
+            success: function(response) {
+                if(response.status){
+                    document.getElementById("newTermForm").reset();
+                    
+                    var dropdown = $('#paymentTerm');
+                    dropdown.empty();
+                    dropdown.append(`<option value="" selected>Choose</option>`);
+                    $.each(response, function(key, value) {
+                        for(let i=0; i<value.length; i++){
+                            if(value[i].name == trm){
+                                dropdown.append($('<option selected></option>').attr('text',value[i].days).text(value[i].name).val(value[i].id))
+                            }else{
+                                dropdown.append($('<option></option>').attr('text',value[i].days).text(value[i].name).val(value[i].id))
+                            }   
+                        }
+                    });
+
+                    findDueDate();
+
+                }else{
+                    alert("Something went wrong.!")
+                }
+            },         
+        });
+    }
+    else{
+        alert('Invalid')
+    }
+});
+
+function findDueDate(){
+    var days = parseInt($('#paymentTerm').find(":selected").attr('text'))
+    start_date =new Date($('#startDate').val())
+
+    if (!isNaN(start_date.getTime())) {
+
+        const endDate = new Date(start_date);
+        endDate.setDate(endDate.getDate() + days);
+
+        const isoString = endDate.toISOString(); 
+        const day = isoString.slice(8, 10);
+        const month = isoString.slice(5, 7);
+        const year = isoString.slice(0, 4);
+
+        const formattedDate = `${day}-${month}-${year}`;
+
+        document.getElementById("endDate").value = formattedDate;
+    } else {
+            alert("Please enter a valid date.");
+            $('#paymentTerm').val('')
+    }
+}
+
+$('#paymentTerm').on('change', function () {
+    findDueDate();
+});
+
+$('#startDate').on('change', function() {
+    findDueDate();
+});
+</script>
 {% endblock %}
