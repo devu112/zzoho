@@ -20315,6 +20315,29 @@ def payment_listout(request):
 
 
 def new_payment(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+        payment = Payment_recieved.objects.filter(company = cmp)
+        allmodules= ZohoModules.objects.get(company = cmp)
+        cust = Customer.objects.filter(company = cmp, customer_status = 'Active')
+        trm = Company_Payment_Term.objects.filter(company = cmp)
+        repeat = CompanyRepeatEvery.objects.filter(company = cmp)
+        bnk = Banking.objects.filter(company = cmp)
+        priceList = PriceList.objects.filter(company = cmp, type = 'Sales', status = 'Active')
+        itms = Items.objects.filter(company = cmp, activation_tag = 'active')
+        units = Unit.objects.filter(company=cmp)
+        accounts=Chart_of_Accounts.objects.filter(company=cmp)
+        context = {
+            'invoices': payment, 'allmodules':allmodules, 'details':dash_details , 'cmp':cmp,  'customers': cust,'pTerms':trm, 'repeat':repeat, 'banks':bnk, 'priceListItems':priceList, 'items':itms,'units': units,'accounts':accounts,
+        }
     return render(request,'zohomodules/payment_recieved/new_payment.html') 
 
 
@@ -20344,8 +20367,7 @@ def create_payment(request):
                 cheque_number = request.POST['cheque_id'] if request.POST['payment_term'] == 'Cheque' else '' ,
                 upi_id = request.POST['upi_id'] if request.POST['payment_term'] == 'UPI' else '',
                 bank_account_number = '' if request.POST['payment_term'] == 'Cash' or request.POST['payment_term'] == 'UPI' or request.POST['payment_term'] == 'Cheque' else request.POST['bnk_id'],
-                amount_to_apply = request.POST[''],
-                amount_to_credit = request.POST[''],
+               
             )
 
             payment.save()
@@ -20361,7 +20383,7 @@ def payment_view(request):
     return render(request,'zohomodules/payment_recieved/payment_view.html')       
 
 
-def createInvoiceCustomer1(request):
+def newCustomerAjax(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
         log_details= LoginDetails.objects.get(id=log_id)
@@ -20369,6 +20391,17 @@ def createInvoiceCustomer1(request):
             com = CompanyDetails.objects.get(login_details = log_details)
         else:
             com = StaffDetails.objects.get(login_details = log_details).company
+
+        if Customer.objects.filter(company = com, GST_number=request.POST['gst_number']).exists():
+            return JsonResponse({'status':False, 'message':'GSTIN already exists'})
+        elif Customer.objects.filter(company = com, PAN_number=request.POST['pan_number']).exists():
+            return JsonResponse({'status':False, 'message':'PAN No. already exists'})
+        elif Customer.objects.filter(company = com, customer_email=request.POST['vendor_email']).exists():
+            return JsonResponse({'status':False, 'message':'Email already exists'})
+        elif Customer.objects.filter(company = com, customer_phone=request.POST['w_phone']).exists():
+            return JsonResponse({'status':False, 'message':'Work Phone no. already exists'})
+        elif Customer.objects.filter(company = com, customer_mobile=request.POST['m_phone']).exists():
+            return JsonResponse({'status':False, 'message':'Mobile No. already exists'})
 
         if request.method=="POST":
             customer_data=Customer()
@@ -20458,8 +20491,6 @@ def createInvoiceCustomer1(request):
             customer_data.shipping_pincode=request.POST['szip']
             customer_data.shipping_mobile=request.POST['sphone']
             customer_data.shipping_fax=request.POST['sfax']
-            customer_data.remarks=request.POST['remark']
-
             customer_data.save()
             
             vendor_history_obj=CustomerHistory()
@@ -20470,12 +20501,12 @@ def createInvoiceCustomer1(request):
             vendor_history_obj.action='Completed'
             vendor_history_obj.save()
 
-            # vdata=Customer.objects.get(id=customer_data.id)
-            # rdata=Customer_remarks_table()
-            # rdata.remarks=request.POST['remark']
-            # rdata.company=com
-            # rdata.customer=vdata
-            # rdata.save()
+            vdata=Customer.objects.get(id=customer_data.id)
+            rdata=Customer_remarks_table()
+            rdata.remarks=request.POST['remark']
+            rdata.company=com
+            rdata.customer=vdata
+            rdata.save()
 
         
             title =request.POST.getlist('tsalutation[]')
@@ -20499,11 +20530,8 @@ def createInvoiceCustomer1(request):
             return JsonResponse({'status':True})
         else:
             return JsonResponse({'status':False})
-        
 
-
-def getCustomers1(request):
-    
+def getCustomers(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
         log_details= LoginDetails.objects.get(id=log_id)
