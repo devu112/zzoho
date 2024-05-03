@@ -493,9 +493,11 @@ urlpatterns = [
     #########################PAYMENT RECIEVED ##################################Devika---------------------------------->
     path('zohomodules/payment_recieved/payment_listout', views.payment_listout, name='payment_listout'),
     path('zohomodules/payment_recieved/new_payment', views.new_payment, name='new_payment'),
+    path('zohomodules/payment_recieved/create_payment', views.create_payment, name='create_payment'),
     path('zohomodules/payment_recieved/payment_view', views.payment_view, name='payment_view'),
     path('zohomodules/payment_recieved/newCustomerAjax',views.newCustomerAjax, name='newCustomerAjax'),
-    path('zohomodules/payment_recieved/getCustomers',views.getCustomers, name='getCustomers'),
+    path('zohomodules/payment_recieved/getCustomers_pay',views.getCustomers_pay, name='getCustomers_pay'),
+    path('zohomodules/payment_recieved/getCustomerDetailsAjax3',views.getCustomerDetailsAjax3, name='getCustomerDetailsAjax3'),
 
 
 

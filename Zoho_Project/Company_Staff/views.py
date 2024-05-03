@@ -20311,7 +20311,18 @@ def getNextRINumber(recInv):
     return nxtRecInv
 
 def payment_listout(request):
-    return render(request,'zohomodules/payment_recieved/payment_listout.html')
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+    allmodules= ZohoModules.objects.get(company = cmp)
+    return render(request,'zohomodules/payment_recieved/payment_listout.html',{'allmodules':allmodules})
 
 
 def new_payment(request):
@@ -20325,7 +20336,6 @@ def new_payment(request):
             cmp = StaffDetails.objects.get(login_details = log_details).company
             dash_details = StaffDetails.objects.get(login_details=log_details)
 
-        payment = Payment_recieved.objects.filter(company = cmp)
         allmodules= ZohoModules.objects.get(company = cmp)
         cust = Customer.objects.filter(company = cmp, customer_status = 'Active')
         trm = Company_Payment_Term.objects.filter(company = cmp)
@@ -20335,10 +20345,20 @@ def new_payment(request):
         itms = Items.objects.filter(company = cmp, activation_tag = 'active')
         units = Unit.objects.filter(company=cmp)
         accounts=Chart_of_Accounts.objects.filter(company=cmp)
+
+        cdn_num = Payment_recieved.objects.filter(company = cmp).last()
+        if cdn_num is None:
+            latestNum =  1
+        else:
+            latestNum = int(cdn_num.reference_number) + 1
+        
+
         context = {
-            'invoices': payment, 'allmodules':allmodules, 'details':dash_details , 'cmp':cmp,  'customers': cust,'pTerms':trm, 'repeat':repeat, 'banks':bnk, 'priceListItems':priceList, 'items':itms,'units': units,'accounts':accounts,
+            'cmp':cmp,'allmodules':allmodules, 'details':dash_details, 'customers': cust,'pTerms':trm, 'repeat':repeat, 'banks':bnk, 'priceListItems':priceList, 'items':itms,
+            'ref_no':latestNum,'units': units,'accounts':accounts,
         }
-    return render(request,'zohomodules/payment_recieved/new_payment.html') 
+
+    return render(request,'zohomodules/payment_recieved/new_payment.html',context)  
 
 
 def create_payment(request):
@@ -20367,7 +20387,8 @@ def create_payment(request):
                 cheque_number = request.POST['cheque_id'] if request.POST['payment_term'] == 'Cheque' else '' ,
                 upi_id = request.POST['upi_id'] if request.POST['payment_term'] == 'UPI' else '',
                 bank_account_number = '' if request.POST['payment_term'] == 'Cash' or request.POST['payment_term'] == 'UPI' or request.POST['payment_term'] == 'Cheque' else request.POST['bnk_id'],
-               
+                amount_to_apply = request.POST['tamount'],
+                amount_to_credit = request.POST['tcredit'],
             )
 
             payment.save()
@@ -20531,7 +20552,7 @@ def newCustomerAjax(request):
         else:
             return JsonResponse({'status':False})
 
-def getCustomers(request):
+def getCustomers_pay(request):
     if 'login_id' in request.session:
         log_id = request.session['login_id']
         log_details= LoginDetails.objects.get(id=log_id)
@@ -20549,3 +20570,43 @@ def getCustomers(request):
     else:
         return redirect('/')
 
+def getCustomerDetailsAjax3(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            com = CompanyDetails.objects.get(login_details = log_details)
+        else:
+            com = StaffDetails.objects.get(login_details = log_details).company
+        
+        # crdnote = Credit_Note.objects.filter(company=com).values('invoice', 'recurring_invoice')
+        custId = request.POST['id']
+        cust = Customer.objects.get(id = custId)
+        
+        invv = []
+        invOp = Customer.objects.filter(id = custId)
+        for io in invOp:
+            invv.append((io.id,'','','Opening Balance','',io.opening_balance,'',io.opening_balance))
+
+        invCus = invoice.objects.filter(customer_id = custId,company=com)
+        for i in invCus:
+            invv.append((i.id,i.date,i.expiration_date,'Invoice',i.invoice_number,i.grand_total,i.advanced_paid,i.balance))
+
+        rinv = RecurringInvoice.objects.filter(customer_id = custId,company=com)
+        for ir in rinv:
+            invv.append((ir.id,ir.start_date,ir.end_date,'Recurring Invoice', ir.rec_invoice_no,ir.grandtotal,ir.advance_paid,ir.balance))
+
+        rcrd = Credit_.objects.filter(customer_id = custId,company=com)
+        for ic in rcrd:
+            invv.append((ic.id,ic.credit_note_date,ic.credit_note_date, 'Credit Note',ic.credit_note_number,ic.grand_total,ic.advance_paid,ic.balance))
+                
+        if cust:
+            context = {
+                'status':True, 'id':cust.id, 'email':cust.customer_email, 'gstType':cust.GST_treatement,'shipState':cust.place_of_supply,'gstin':False if cust.GST_number == "" or cust.GST_number == None or cust.GST_number == 'null' else True, 'gstNo':cust.GST_number,
+                'street':cust.billing_address, 'city':cust.billing_city, 'state':cust.billing_state, 'country':cust.billing_country, 'pincode':cust.billing_pincode,'invoice':invv
+            }
+            return JsonResponse(context)
+        else:
+            return JsonResponse({'status':False, 'message':'Something went wrong..!'})
+    else:
+       return redirect('/')

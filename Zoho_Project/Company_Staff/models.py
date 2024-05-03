@@ -1242,8 +1242,23 @@ class Payment_details(models.Model):
     invoice_number=models.CharField(max_length=220,null=True,blank=True)
     invoice_type=models.CharField(max_length=220,null=True,blank=True)
     Due_Date = models.DateField(null=True)
-    Date=models.DateField(null=True)  
+    Date=models.DateField(null=True)
+
+class Payment_reference(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details=models.ForeignKey(LoginDetails,on_delete=models.CASCADE)
+    reference_number = models.CharField(max_length=220,null=True,blank=True)
 
 
-
+class payment_history(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details=models.ForeignKey(LoginDetails,on_delete=models.CASCADE)
+    payment_recieved=models.ForeignKey(Payment_recieved,on_delete=models.CASCADE)
+    Date=models.DateField(null=True)
+    action_choices = [
+        ('Created', 'Created'), 
+        ('Edited', 'Edited')
+        ]
+    action = models.CharField(max_length=10, choices=action_choices,null=True)
+    
 
