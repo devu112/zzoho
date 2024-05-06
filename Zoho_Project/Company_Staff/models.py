@@ -1222,14 +1222,15 @@ class Payment_recieved(models.Model):
     customer_place_of_supply=models.CharField(max_length=220,null=True,blank=True)
     payment_date = models.DateField(null=True)
     reference_number=models.IntegerField(blank=True,null=True,)
-    payment_number=models.IntegerField(blank=True,null=True,)
-    payment_method = models.CharField(max_length=220,null=True,blank=True)
+    payment_method = models.CharField(max_length=100,null=True,blank=True)
+    payment_number=models.CharField(max_length=100,null=True,blank=True)
     cheque_number = models.CharField(max_length=220,null=True,blank=True)
     upi_id =models.CharField(max_length=220,null=True,blank=True)
     bank_account_number = models.CharField(max_length=255, blank=True, null=True)
     amount_to_apply = models.FloatField(default=0.0, null=True, blank=True)
     amount_to_credit = models.FloatField(default=0.0, null=True, blank=True)
     status = models.CharField(max_length=255,null=True,blank=True)  
+    payment_number=models.CharField(max_length=100,null=True,blank=True)
 
 
 class Payment_details(models.Model):
@@ -1262,3 +1263,39 @@ class payment_history(models.Model):
     action = models.CharField(max_length=10, choices=action_choices,null=True)
     
 
+class Credit_Note(models.Model):
+    company = models.ForeignKey(CompanyDetails, on_delete=models.CASCADE)
+    login_details = models.ForeignKey(LoginDetails, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE,blank=True, null=True)
+    customer_email = models.EmailField()
+    customer_billing_address = models.CharField(max_length=255)
+    customer_gst_type = models.CharField(max_length=255)
+    customer_gst_number = models.CharField(max_length=255)
+    customer_place_of_supply = models.CharField(max_length=255)
+    credit_note_date = models.DateField()
+    invoice = models.ForeignKey(invoice, on_delete=models.CASCADE,blank=True, null=True)
+    recurring_invoice = models.ForeignKey(RecurringInvoice, on_delete=models.CASCADE,blank=True, null=True)
+    invoice_type = models.CharField(max_length=255)
+    invoice_number = models.CharField(max_length=255)
+    reference_number = models.IntegerField()
+    credit_note_number = models.CharField(max_length=255)
+    payment_method = models.CharField(max_length=255)
+    cheque_number = models.CharField(max_length=255)
+    upi_number = models.CharField(max_length=255)
+    bank_account_number = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    terms_and_condition = models.CharField(max_length=255)
+    document = models.FileField(upload_to='documents/')
+    sub_total = models.FloatField()
+    cgst = models.FloatField()
+    sgst = models.FloatField()
+    taxAmount_igst = models.FloatField()
+    shipping_charge = models.FloatField()
+    adjustment = models.FloatField()
+    grand_total = models.FloatField()
+    advance_paid = models.FloatField()
+    balance = models.FloatField()
+    status = models.CharField(max_length=255)
+
+    def getNumFieldName(self):
+        return 'invoice_number'

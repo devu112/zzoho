@@ -54,9 +54,9 @@
                             <i class="fas fa-sort m-1"></i>
                         </a>
                         <div class="dropdown-menu m-1" style="background-color: black; color: white;">
-                          <a class="dropdown-item" href="" style="color: azure;">All</a>
-                          <a class="dropdown-item" href="javascript:sortTable(1)" style="color: azure;"> Name </a>
-                          <a class="dropdown-item" href="javascript:sortTable(2)" style="color: azure;">Payment No </a>
+                          <a class="dropdown-item" href="#" onclick="sortTable('all')" style="color: azure;">All</a>
+                          <a class="dropdown-item" href="#" onclick="sortTable('payment')" style="color: azure;">Payment Received Number</a>
+                          <a class="dropdown-item" href="#" onclick="sortTable('name')" style="color: azure;">Name</a>
                         
                         </div>
                     </div>
@@ -70,11 +70,17 @@
                                 <i class="fa fa-filter mt-1"></i>
                             </a>
                             <div class="dropdown-menu m-1" style="background-color: black; color: white;">
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;">All</a>
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;">Draft</a>
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;">Save</a>
+                              <!-- Modify the filter dropdown menu -->
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'All')">All</a>
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'Saved')">Saved</a>
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'Draft')">Draft</a>
+
                             </div>
                         </div>
+                     
+                        
+                        <!-- Add this JavaScript function after your HTML code -->
+                      
               
                         <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;margin-left: 10px;" onclick="reduce_dash()" data-bs-toggle="modal" data-bs-target="#import_modal" class="btn btn-outline-warning"  href="">
                           <i class="fa fa-file-excel-o p-1" style="font-size: large;"></i>
@@ -107,8 +113,8 @@
                     
                       <tr style="background-color: rgb(0, 0, 0);border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0);text-align: center;">
                           <th style="color: rgb(247, 247, 247);">Date</th>
-                          <th style="color: rgb(250, 247, 242);">Payment Recieved No</th>
-                          <th style="color: rgb(244, 244, 244);">Customer Name</th>
+                          <th id="paymentNumberHeader" style="color: rgb(250, 247, 242);">Payment Recieved No</th>
+                          <th id="customerNameHeader" style="color: rgb(244, 244, 244);">Customer Name</th>
                           <th style="color: rgb(255, 255, 255);">Customer Mail id</th>
                           <th style="color: rgb(252, 252, 252);">Amount </th>
                           <th style="color: rgb(237, 237, 236);">Status</th>
@@ -119,19 +125,18 @@
                   </thead>
                 <tbody style="background-color: black;">
                   
-                  {% for i in item %}
-                <tr style="background-color: rgb(0, 0, 0);border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0);text-align: center;" class='clickable-row' data-href="{% url 'itemsoverview' i.id%}">             
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;">{{forloop.counter}}</td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id%}">{{ i.item_name }}</td>
-                  <!-- <td style="color: rgb(0, 0, 0); background-color: black;">{{ i.type }}</td> -->
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.hsn_code }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.selling_price }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.purchase_price }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.opening_stock }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.current_stock }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'itemsoverview'  i.id %}">{{ i.activation_tag }}</a></td>
+              {% for p in payment %}
+                <tr style="background-color: rgb(0, 0, 0);border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0);text-align: center;" class='clickable-row' data-href="">             
+                  <!-- <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;">{{forloop.counter}}</td> -->
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.payment_date }}</td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.payment_number }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.customer.first_name }} {{ p.customer.last_name }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.customer_email }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.amount_to_apply }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.status }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.amount_to_credit }}</a></td>
               </tr>
-            {% endfor %}
+             {% endfor %}
             
               
                 </tbody>
@@ -156,7 +161,24 @@
         </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
+
+<script>
+  
+// Sorting function
+function sortTable(column) {
+  var table = $('#data-table').DataTable();
+  if (column === 'payment') {
+    // Sort by Payment Received Number in ascending order
+    table.order([1, 'asc']).draw();
+  } else if (column === 'name') {
+    // Sort by Customer Name in alphabetical order
+    table.order([2, 'asc']).draw();
+  }
+}
+
+</script>
 
 
 

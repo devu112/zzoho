@@ -20322,7 +20322,8 @@ def payment_listout(request):
             dash_details = StaffDetails.objects.get(login_details=log_details)
 
     allmodules= ZohoModules.objects.get(company = cmp)
-    return render(request,'zohomodules/payment_recieved/payment_listout.html',{'allmodules':allmodules})
+    payment = Payment_recieved.objects.filter(company = cmp)
+    return render(request,'zohomodules/payment_recieved/payment_listout.html',{'allmodules':allmodules,'payment':payment})
 
 
 def new_payment(request):
@@ -20345,23 +20346,40 @@ def new_payment(request):
         itms = Items.objects.filter(company = cmp, activation_tag = 'active')
         units = Unit.objects.filter(company=cmp)
         accounts=Chart_of_Accounts.objects.filter(company=cmp)
+        payments=Payment_recieved.objects.filter(company=cmp)
 
-        cdn_num = Payment_recieved.objects.filter(company = cmp).last()
-        if cdn_num is None:
+        pay_refnum = Payment_reference.objects.filter(company = cmp).last()
+        if pay_refnum is None:
             latestNum =  1
         else:
-            latestNum = int(cdn_num.reference_number) + 1
+            latestNum = int(pay_refnum.reference_number) + 1
+
+        
+        # Finding next pay recive number w r t last pay recive number if exists.
+        nxtPayRecNo = ""
+        lastCdn = Payment_recieved.objects.filter(company = cmp).last()
+        if lastCdn:
+            cdn_no = str(lastCdn.payment_number)
+            prefix = ''.join(filter(str.isalpha, cdn_no))  # Extract prefix letters
+            num_part = ''.join(filter(str.isdigit, cdn_no))  # Extract numeric part
+            rb_num = int(num_part) + 1 
+            padded_rb_num = str(rb_num).zfill(len(num_part))
+            nxtPayRecNo = prefix + padded_rb_num
+            
+        else:
+            nxtPayRecNo = 'PR-01'
         
 
         context = {
-            'cmp':cmp,'allmodules':allmodules, 'details':dash_details, 'customers': cust,'pTerms':trm, 'repeat':repeat, 'banks':bnk, 'priceListItems':priceList, 'items':itms,
-            'ref_no':latestNum,'units': units,'accounts':accounts,
+            'cmp':cmp,'allmodules':allmodules, 'details':dash_details, 'customers': cust,'pTerms':trm, 'repeat':repeat, 'bank':bnk, 'priceListItems':priceList, 'items':itms,
+            'ref_no':latestNum,'units': units,'accounts':accounts,'nxtPayRecNo':nxtPayRecNo,'payments':payments
         }
 
-    return render(request,'zohomodules/payment_recieved/new_payment.html',context)  
+    return render(request,'zohomodules/payment_recieved/new_payment.html',context) 
 
 
 def create_payment(request):
+    
     if 'login_id' in request.session:
         log_id = request.session['login_id']
         log_details= LoginDetails.objects.get(id=log_id)
@@ -20382,13 +20400,13 @@ def create_payment(request):
                 customer_place_of_supply=request.POST['place_of_supply'],
                 payment_date = request.POST['start_date'],
                 reference_number= request.POST['reference_number'],
-                payment_number= request.POST[''],
-                payment_method = request.POST['payment_term'],
-                cheque_number = request.POST['cheque_id'] if request.POST['payment_term'] == 'Cheque' else '' ,
-                upi_id = request.POST['upi_id'] if request.POST['payment_term'] == 'UPI' else '',
-                bank_account_number = '' if request.POST['payment_term'] == 'Cash' or request.POST['payment_term'] == 'UPI' or request.POST['payment_term'] == 'Cheque' else request.POST['bnk_id'],
+                payment_number= request.POST['paymentRecievedNo'],
+                payment_method = request.POST['payType'],
+                cheque_number = request.POST['cheque_id'] if request.POST['payType'] == 'Cheque' else '' ,
+                upi_id = request.POST['upi_id'] if request.POST['payType'] == 'UPI' else '',
+                bank_account_number = '' if request.POST['payType'] == 'Cash' or request.POST['payType'] == 'UPI' or request.POST['payType'] == 'Cheque' else request.POST['bnk_id'],
                 amount_to_apply = request.POST['tamount'],
-                amount_to_credit = request.POST['tcredit'],
+                amount_to_credit = request.POST['tbalance'],
             )
 
             payment.save()
@@ -20397,7 +20415,57 @@ def create_payment(request):
                 payment.status = "Draft"
             elif "Saved" in request.POST:
                 payment.status = "Saved" 
-            payment.save()       
+            payment.save()
+            
+            
+            datee = request.POST.getlist("date[]")
+            duedate = request.POST.getlist("duedate[]")
+            invoicetype  = request.POST.getlist("invoicetype[]")
+            invoiceNumber = request.POST.getlist("invoiceNumber[]")
+            invoiceAmount = request.POST.getlist("invoiceAmount[]")
+            payment1 = request.POST.getlist("payment[]") 
+            balance = request.POST.getlist("balance[]")
+            # total = request.POST.getlist("total[]")
+
+            mapped = zip(datee,duedate,invoicetype,invoiceNumber,invoiceAmount,payment1,balance)
+            mapped = list(mapped)
+            for i in mapped:
+                
+                pay = Payment_details.objects.create(
+                company = com,
+                login_details = com.login_details,
+                payment_recieved= payment1,
+                balance = i[6], 
+                payment= i[5], 
+                invoice_amount = i[4], 
+                invoice_number= i[3], 
+                invoice_type= i[2], 
+                Due_Date = i[1], 
+                Date = i[0]
+                )
+                pay.save()
+
+            # history
+            histry = payment_history(
+                company = com,
+                login_details= log_details,
+                payment_recieved = payment,
+                Date= date.today(),
+                action = 'Created',
+            )
+            histry.save()
+
+            # reference numebr
+
+            Payment_reference.objects.create(
+                company = com,
+                login_details = log_details,
+                reference_number = request.POST['reference_number']
+            )
+
+            return redirect(payment_listout)
+        else:
+            return redirect(payment_listout)
 
 
 def payment_view(request):
@@ -20584,29 +20652,143 @@ def getCustomerDetailsAjax3(request):
         cust = Customer.objects.get(id = custId)
         
         invv = []
-        invOp = Customer.objects.filter(id = custId)
+        flag_Cnote = False
+        flag_Rinvoice = False 
+        flag_invoice = False
+        invOp = CustomerHistory.objects.filter(customer_id = custId,action='Completed')
         for io in invOp:
-            invv.append((io.id,'','','Opening Balance','',io.opening_balance,'',io.opening_balance))
+            invv.append((io.customer.id,io.date,io.date,'Opening Balance','',io.customer.opening_balance,0,io.customer.opening_balance))
 
-        invCus = invoice.objects.filter(customer_id = custId,company=com)
-        for i in invCus:
-            invv.append((i.id,i.date,i.expiration_date,'Invoice',i.invoice_number,i.grand_total,i.advanced_paid,i.balance))
+        invCus = invoice.objects.filter(customer_id = custId,company=com).first() 
+        if invCus:
+            flag_invoice = True
+            invv.append((invCus.id,invCus.date,invCus.expiration_date,'Invoice',invCus.invoice_number,invCus.grand_total,invCus.advanced_paid,invCus.balance))
 
-        rinv = RecurringInvoice.objects.filter(customer_id = custId,company=com)
-        for ir in rinv:
-            invv.append((ir.id,ir.start_date,ir.end_date,'Recurring Invoice', ir.rec_invoice_no,ir.grandtotal,ir.advance_paid,ir.balance))
+        rinv = RecurringInvoice.objects.filter(customer_id = custId,company=com).first()
+        if rinv:
+            flag_Rinvoice = True
+            invv.append((rinv.id,rinv.start_date,rinv.end_date,'Recurring Invoice', rinv.rec_invoice_no,rinv.grandtotal,rinv.advance_paid,rinv.balance))
 
-        rcrd = Credit_.objects.filter(customer_id = custId,company=com)
-        for ic in rcrd:
-            invv.append((ic.id,ic.credit_note_date,ic.credit_note_date, 'Credit Note',ic.credit_note_number,ic.grand_total,ic.advance_paid,ic.balance))
+        rcrd = Credit_Note.objects.filter(customer_id = custId,company=com).first()
+        if rcrd:
+            flag_Cnote = True
+            invv.append((rcrd.id,rcrd.credit_note_date,rcrd.credit_note_date, 'Credit Note',rcrd.credit_note_number,rcrd.grand_total,rcrd.advance_paid,rcrd.balance))
+
+        # invoice number dropdown
+        invlists = []
+        invCuslist = invoice.objects.filter(customer_id = custId,company=com).values('id','invoice_number')[1:]
+        for i in invCuslist:
+            invlists.append((i['id'],i['invoice_number'],'Invoice'))
+        rinvlist = RecurringInvoice.objects.filter(customer_id = custId,company=com).values('id','rec_invoice_no')[1:]
+        for i in rinvlist:
+            invlists.append((i['id'],i['rec_invoice_no'],'Recurring Invoice'))
+        rcrdlist = Credit_Note.objects.filter(customer_id = custId,company=com).values('id','credit_note_number')[1:]
+        for i in rcrdlist:
+            invlists.append((i['id'],i['credit_note_number'],'Credit Note'))
                 
         if cust:
             context = {
                 'status':True, 'id':cust.id, 'email':cust.customer_email, 'gstType':cust.GST_treatement,'shipState':cust.place_of_supply,'gstin':False if cust.GST_number == "" or cust.GST_number == None or cust.GST_number == 'null' else True, 'gstNo':cust.GST_number,
-                'street':cust.billing_address, 'city':cust.billing_city, 'state':cust.billing_state, 'country':cust.billing_country, 'pincode':cust.billing_pincode,'invoice':invv
+                'street':cust.billing_address, 'city':cust.billing_city, 'state':cust.billing_state, 'country':cust.billing_country, 'pincode':cust.billing_pincode,'invoice':invv,'invoicelist':invlists,
+                'flag_invoice':flag_invoice,'flag_Rinvoice':flag_Rinvoice,'flag_Cnote':flag_Cnote,
             }
             return JsonResponse(context)
         else:
             return JsonResponse({'status':False, 'message':'Something went wrong..!'})
     else:
        return redirect('/')
+
+
+def checkPaymentPattern(prefix):
+    models = [invoice, Bill, Journal, Delivery_challan, RetainerInvoice, SaleOrder, Credit_Note]
+
+    for model in models:
+        field_name = model.getNumFieldName(model)
+        if model.objects.filter(**{f"{field_name}__icontains": prefix}).exists():
+            return True
+    return False
+
+def checkPaymentNumber(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            com = CompanyDetails.objects.get(login_details = log_details)
+        else:
+            com = StaffDetails.objects.get(login_details = log_details).company
+        
+        RecInvNo = request.GET['paymentRecievedNo'].upper() 
+        cdn_no0 = str(RecInvNo)
+        prefix = ''.join(filter(str.isalpha, cdn_no0))       
+        
+        nextPayRecNo = ""
+        lastCdn = Payment_recieved.objects.filter(company = com).last()
+        if lastCdn:
+            cdn_no = str(lastCdn.payment_number)
+            prefix1 = ''.join(filter(str.isalpha, cdn_no))  # Extract prefix letters
+            num_part = ''.join(filter(str.isdigit, cdn_no))  # Extract numeric part
+            rb_num = int(num_part) + 1 
+            padded_rb_num = str(rb_num).zfill(len(num_part))
+            nextPayRecNo = prefix1 + padded_rb_num        
+
+        pattern_exists = checkPaymentPattern(prefix)
+
+        if prefix !="" and pattern_exists:
+            return JsonResponse({'status':False, 'message':'Pattern Code already Exists.!'})
+        elif Payment_recieved.objects.filter(company = com, payment_number__iexact = RecInvNo).exists():
+            return JsonResponse({'status':False, 'message':'Credit Note No. already Exists.!'})
+        elif nextPayRecNo != "" and RecInvNo != nextPayRecNo:
+            return JsonResponse({'status':False,'valid':True , 'message':'Credit Note No. is not continuous.!'})
+        else:
+            return JsonResponse({'status':True,'valid':True ,'message':'Number is okay.!'})
+    else:
+       return redirect('/')
+    
+def changeInvoiceRow(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            com = CompanyDetails.objects.get(login_details = log_details)
+        else:
+            com = StaffDetails.objects.get(login_details = log_details).company
+
+        selected_value = request.POST.get('value')
+        selected_type = request.POST.get('type')
+        print('11111111111',selected_type,selected_value) 
+
+        if selected_type == 'Invoice':
+            Inv = invoice.objects.get(id=selected_value)
+            context = {
+                'date':Inv.date,
+                'duedate':Inv.expiration_date,
+                'amount':Inv.grand_total,
+                'payment':Inv.advanced_paid,
+                'balance':Inv.balance,
+                'type':selected_type
+            }
+            return JsonResponse(context)
+        elif selected_type == 'Recurring Invoice':
+            Inv = RecurringInvoice.objects.get(id=selected_value)
+            context = {
+                'date':Inv.start_date,
+                'duedate':Inv.end_date,
+                'amount':Inv.grandtotal,
+                'payment':Inv.advance_paid,
+                'balance':Inv.balance,
+                'type':selected_type
+            }
+            return JsonResponse(context)
+        elif selected_type == 'Credit Note':
+            Inv = Credit_Note.objects.get(id=selected_value)
+            context = {
+                'date':Inv.credit_note_date,
+                'duedate':Inv.credit_note_date,
+                'amount':Inv.grand_total,
+                'payment':Inv.advance_paid,
+                'balance':Inv.balance,
+                'type':selected_type
+            }
+            return JsonResponse(context)
+        else:
+            return JsonResponse({'error':'else part'})       

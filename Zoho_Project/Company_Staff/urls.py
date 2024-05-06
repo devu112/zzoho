@@ -498,6 +498,10 @@ urlpatterns = [
     path('zohomodules/payment_recieved/newCustomerAjax',views.newCustomerAjax, name='newCustomerAjax'),
     path('zohomodules/payment_recieved/getCustomers_pay',views.getCustomers_pay, name='getCustomers_pay'),
     path('zohomodules/payment_recieved/getCustomerDetailsAjax3',views.getCustomerDetailsAjax3, name='getCustomerDetailsAjax3'),
+    path('zohomodules/payment_recieved/checkPaymentPattern',views.checkPaymentPattern, name='checkPaymentPattern'),
+    path('zohomodules/payment_recieved/checkPaymentNumber',views.checkPaymentNumber, name='checkPaymentNumber'),
+     path('zohomodules/payment_recieved/changeInvoiceRow',views.changeInvoiceRow, name='changeInvoiceRow'),
+
 
 
 
