@@ -96,7 +96,8 @@
     font-weight: bold;
   }
   .dropdown-item.customers-options:hover, .dropdown-item.items-options:hover{
-    background: blue !important;
+    background: white !important;
+    color: black !important;
     cursor: pointer;
   }
 </style>
@@ -247,8 +248,8 @@
       </ol>
     </nav>
 <div class="row mt-5">
-          <div class="col-md-12">
-            <div class="card mb-5 px-3 py-4" style="background-color: black; border-radius: 1vh;">
+          <div class="col-md-12 py-3" style="background-color: black; border-radius: 1vh;">
+            <div class="card mb-5 px-3 py-4" style="background-color: black; box-shadow: none;">
               <h1 class="mb-0 text-uppercase text-right" style="color: white; font-weight: bolder;">PAYMENT RECIEVED</h1><br>
               <hr class="text-warning">
               <form method="post" action="{% url 'create_payment' %}" enctype="multipart/form-data" id="paymentRecievedForm" >
@@ -524,7 +525,7 @@
                          
                             <tbody id='invoicedata'>
                                
-                                    <tr id='tab_row1'>
+                                    <tr >
                                         
                                         <td>
                                             <input type="date" name='date[]' id="date1" class="form-control bg-black text-white" readonly />
@@ -541,14 +542,14 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" name='invoiceAmount[]' id="invoiceAmount1" class="form-control bg-black text-white" value="0" />
+                                            <input type="number" name='invoiceAmount[]' id="invoiceAmount1" class="form-control bg-black text-white tamounts" value="0" />
                                         </td>
                                         
                                         <td>
-                                            <input type="number" name='payment[]' id="payment1" class="form-control bg-black text-white" value="0" />
+                                            <input type="number" name='payment[]' id="payment1" onchange="calculateBalanceForRow(this)" class="form-control bg-black text-white tpayments" value="0" />
                                         </td>
                                         <td>
-                                            <input type="number" name='balance[]' id="balance1" class="form-control bg-black text-white" value="0" readonly />
+                                            <input type="number" name='balance[]' id="balance1" class="form-control bg-black text-white tbalances" value="0" readonly />
                                         </td>
                                     </tr>
 
@@ -649,10 +650,11 @@
                             <div class="invalid-feedback">You must agree before submitting.</div>
                         </div>
                       </div>
+                      <input type="hidden" name="buttonValue" id="targetInput" readonly>
                       <div class="mt-4">
                         <input type="submit" class="btn save_btn" style="background-color: chocolate; color: white;" value="SAVE" name="Saved" id="save">
                         <input class="btn save_btn" style="background-color: chocolate; color: white;" type="submit" value="DRAFT" name="Draft" id="draft">
-                        <input class="btn save_btn" style="background-color: chocolate; color: white;" type="reset" onclick="window.location.href=`{% url 'new_payment' %}`" value="CANCEL" id="cancel">
+                        <input class="btn save_btn" style="background-color: chocolate; color: white;" type="reset" onclick="window.location.href=`{% url 'payment_listout' %}`" value="CANCEL" id="cancel">
                       </div>
                     </form>
 
@@ -662,41 +664,54 @@
  
 </div>
 
+
 <script>
-    $(document).ready(function() {
-    // Attach event listener to form submit event
-    $('#paymentRecievedForm').submit(function(event) {
-        // Prevent default form submission
-        event.preventDefault();
-
-        // Get the code from the input field
-        var code = $('#paymentRecievedNo').val();
-
-        // AJAX request to check the code
-        $.ajax({
-            url: '{% url "checkPaymentNumber" %}', // URL to your server-side code checker
-            method: 'get',
-            data: {
-                'paymentRecievedNo': code
-            },
-            success: function(response) {
-                // If code is valid, submit the form
-                if (response.valid) {
-                    $('#paymentRecievedForm').off('submit').submit(); // Unbind this event and submit the form
-                } else {
-                    // If code is invalid, show an error message
-                    alert(response.message);
+    document.addEventListener("DOMContentLoaded", function() {
+        const saveButton = document.getElementById("save");
+        const draftButton = document.getElementById("draft");
+        const targetInput = document.getElementById("targetInput");
+    
+        saveButton.addEventListener("click", function() {
+            targetInput.value = "SAVE";
+        });
+    
+        draftButton.addEventListener("click", function() {
+            targetInput.value = "DRAFT";
+        });
+    
+        // Attach event listener to form submit event
+        $('#paymentRecievedForm').submit(function(event) {
+            // Prevent default form submission
+            event.preventDefault();
+    
+            // Get the code from the input field
+            var code = $('#paymentRecievedNo').val();
+    
+            // AJAX request to check the code
+            $.ajax({
+                url: '{% url "checkPaymentNumber" %}', // URL to your server-side code checker
+                method: 'get',
+                data: {
+                    'paymentRecievedNo': code
+                },
+                success: function(response) {
+                    // If code is valid, submit the form
+                    if (response.valid) {
+                        $('#paymentRecievedForm').off('submit').submit(); // Unbind this event and submit the form
+                    } else {
+                        // If code is invalid, show an error message
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Handle AJAX error
+                    console.error('Error:', error);
                 }
-            },
-            error: function(xhr, status, error) {
-                // Handle AJAX error
-                console.error('Error:', error);
-            }
+            });
         });
     });
-});
-
-</script>
+    </script>
+    
 
 <!-- New Customer Modal -->
 <div class="modal fade" id="newCustomer">
@@ -2339,13 +2354,13 @@
                         </select>
                     </td>
                     <td>
-                        <input type='number' name='invoiceAmount[]' value='${invoice[5]}' id='invoiceAmount1' class='form-control bg-black text-white amount' value='0' />
+                        <input type='number' name='invoiceAmount[]' onchange="updateBalanceForAmount(this)" oninput="updateBalanceForAmount(this)" value='${invoice[5]}' id='invoiceAmount1' class='form-control bg-black text-white amount tamounts' value='0' />
                     </td>
                     <td>
-                        <input type='number' name='payment[]' id='payment1' value='${invoice[6]}' class='form-control bg-black text-white payment' value='0' />
+                        <input type='number' name='payment[]' id='payment1' onchange="calculateBalanceForRow(this)" value='${invoice[6]}' class='form-control bg-black text-white payment tpayments' value='0' />
                     </td>
                     <td>
-                        <input type='number' name='balance[]' id='balance1' value='${invoice[7]}' class='form-control bg-black text-white balance' value='0' readonly />
+                        <input type='number' name='balance[]' id='balance1' value='${invoice[7]}' class='form-control bg-black text-white balance tbalances' value='0' readonly />
                     </td>
                 </tr> ` ;
                         table.append(newRow);
@@ -2395,6 +2410,81 @@
     }
 }
 
+function calculateBalanceForRow(paymentInput) {
+    // Get the parent row of the payment input
+    const row = paymentInput.closest("tr");
+    
+    // Get input fields for invoiceAmount, payment, and balance in this row
+    const invoiceAmountInput = row.querySelector(".tamounts");
+    const balanceInput = row.querySelector(".tbalances");
+    
+    // Get the values from invoiceAmount and payment inputs
+    const invoiceAmount = parseFloat(invoiceAmountInput.value);
+    const payment = parseFloat(paymentInput.value);
+    
+    // Calculate the balance
+    const balance = invoiceAmount - payment;
+    
+    // Update the value of the balance input
+    balanceInput.value = isNaN(balance) ? 0 : balance.toFixed(2);
+    calculateAll();
+}
+
+// Wait for the document to be fully loaded
+document.addEventListener("DOMContentLoaded", function() {
+    // Get all payment inputs
+    const paymentInputs = document.querySelectorAll(".tpayments");
+
+    // Add event listeners to all payment inputs
+    paymentInputs.forEach(paymentInput => {
+        paymentInput.addEventListener("input", function() {
+            calculateBalanceForRow(this);
+        });
+    });
+});
+
+
+
+function updateBalanceForAmount(amountInput) {
+    // Get the parent row of the amount input
+    const row = amountInput.closest("tr");
+    
+    // Get input fields for invoiceAmount, payment, and balance in this row
+    const balanceInput = row.querySelector(".tbalances");
+    const paymentInput = row.querySelector(".tpayments");
+
+    // Get the values from invoiceAmount and payment inputs
+    const invoiceAmount = parseFloat(amountInput.value);
+    const payment = parseFloat(paymentInput.value);
+    
+    // Calculate the balance
+    const balance = invoiceAmount - payment;
+    
+    // Update the value of the balance input
+    balanceInput.value = isNaN(balance) ? 0 : balance.toFixed(2);
+    calculateAll();
+}
+
+// Wait for the document to be fully loaded
+document.addEventListener("DOMContentLoaded", function() {
+    // Get all amount inputs
+    const amountInputs = document.querySelectorAll(".tamounts");
+
+    // Add event listeners to all amount inputs
+    amountInputs.forEach(amountInput => {
+        amountInput.addEventListener("input", function() {
+            updateBalanceForAmount(this);
+        });
+    });
+});
+
+
+
+
+
+
+
+
 function calculateBalance() {
     var table = document.getElementById("invoicedata");
     var total = 0;
@@ -2434,7 +2524,7 @@ function calculateAll() {
         calculateBalance();
         calculateAmount();
         calculatePayment();
-    }, 500);
+    }, 300);
 }
 
 

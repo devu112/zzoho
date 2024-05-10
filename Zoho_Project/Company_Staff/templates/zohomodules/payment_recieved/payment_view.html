@@ -357,7 +357,7 @@
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'company_dashboard' %}" class="text-warning-emphasis">Dashboard</a></li>
         <li class="breadcrumb-item"><a class="text-warning-emphasis">Sales</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'recurringInvoice' %}" class="text-warning-emphasis">Recurring Invoice</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'new_payment' %}" class="text-warning-emphasis">PAYMENT RECIEVED</a></li>
         <li class="breadcrumb-item" aria-current="page" id="over">Overview</li>
         <li class="breadcrumb-item" aria-current="page" id="tmplt" style="display: none;">Templates</li>
         <li class="breadcrumb-item" aria-current="page" id="slp" style="display: none;">Slip</li>
@@ -380,7 +380,7 @@
                   <div class="dropdown-menu ">
                       <a class="dropdown-item text-black" href="" >All</a>
                       <a class="dropdown-item text-black" onclick="sortTable(0)">Name</a>
-                      <a class="dropdown-item text-black" onclick="sortTable(1)">RI NO.</a>
+                      <a class="dropdown-item text-black" onclick="sortTable(1)">Payment No:</a>
                   </div>
   
                   <a class="btn btn-outline-warning small_btn mt-4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" role="button">
@@ -391,7 +391,7 @@
                     <a class="dropdown-item text-black" onclick="filterTable('Saved')">Saved</a>
                     <a class="dropdown-item text-black" onclick="filterTable('Draft')">Draft</a>
                   </div>
-                  <a class="btn btn-outline-warning small_btn mt-4" role="button" href="{% url 'addRecurringInvoice' %}">
+                  <a class="btn btn-outline-warning small_btn mt-4" role="button" href="{% url 'new_payment' %}">
                     <i class="fa fa-plus"></i>
                   </a>
                 </div>
@@ -401,15 +401,15 @@
                     <div class="table-responsive">
                       <table class="table text-white" id="sidetable">
                         <tbody>
-                          {% for inv in allInvoices %}
-                          <tr onclick="window.location.href=`{% url 'viewRecurringInvoice' inv.id %}`" style="cursor: pointer;">
+                          {% for p in payment %}
+                          <!-- <tr onclick="window.location.href="" style="cursor: pointer;"> -->
                             <td>
-                              <span class="name"><b>{{ inv.customer.title }} {{ inv.customer.first_name }} {{ inv.customer.last_name }}</b></span><br><br>
-                              <span class="invNo">{{ inv.rec_invoice_no }}</span>
+                              <span class="name"><b>{{ p.customer.first_name }} {{ p.customer.last_name }}</b></span><br><br>
+                              <span class="invNo">{{ p.payment_number }}</span>
                             </td>
                             <td>
-                              <span style="float: right;" class="amt">&#8377;{{ inv.balance }}</span><br><br>
-                              <span style="float: right;" class="stat">{{inv.status}}</span>
+                              <span style="float: right;" class="amt">&#8377;{{ p.amount_to_credit }}</span><br><br>
+                              <span style="float: right;" class="stat">{{p.status}}</span>
                             </td>
                           </tr>
                           {% endfor %}
@@ -452,7 +452,7 @@
                     </div>
                     <div class="col-md-6">
                       <div class="d-sm-flex" style="float: right;">
-                        {% if invoice.status == 'Draft' %}
+                        {% if payment.status == 'Draft' %}
                         <a class="btn btn-outline-warning small_btn mt-2 ms-1" onclick="return confirm('Do you want to convert this Draft to Saved ?')" title="CONVERT" id="convert_btn" href="{% url 'convertRecurringInvoice' invoice.id %}">
                           <i class="fa fa-exchange"></i>
                         </a>
@@ -460,7 +460,7 @@
                         <a class="btn btn-outline-warning small_btn mt-2 ms-1" title="EDIT" id="edit_btn" href=">
                           <i class="fa fa-pencil"></i>
                         </a>
-                        <a class="btn btn-outline-warning small_btn mt-2 ms-1" href="" onclick="return confirm('Are you sure you want to delete this Recurring Invoice - {{invoice.rec_invoice_no}} ?')" title="DELETE" id="delete_btn">
+                        <a class="btn btn-outline-warning small_btn mt-2 ms-1" href="" onclick="return confirm('Are you sure you want to delete this payment recieved ? - {{invoice.rec_invoice_no}} ?')" title="DELETE" id="delete_btn">
                           <i class="fa fa-trash"></i>
                         </a>
                         <a class="btn btn-outline-warning small_btn mt-2 ms-1" style="display: none;" title="SHARE" id="share_btn" data-bs-toggle="dropdown" aria-expanded="false">
@@ -542,7 +542,7 @@
 
                       <div class="row mt-4">
                         <div class="col-md-8">
-                          <h5 class="fw-bold" style="border-bottom: 1px solid rgba(128, 128, 128, 0.6); width: fit-content;">Recurring Invoice Details</h5>
+                          <h5 class="fw-bold" style="border-bottom: 1px solid rgba(128, 128, 128, 0.6); width: fit-content;">Payment Details</h5>
                         </div>
                         <div class="col-md-4"></div>
                       </div>
@@ -644,9 +644,7 @@
                   <hr class="mx-3">
                   <div class="row mt-1">
                     <div class="row px-4">
-                      <div class="col-md-8">
-                        <h5 class="fw-bold" style="border-bottom: 1px solid rgba(128, 128, 128, 0.6); width: fit-content;">Item Details</h5>
-                      </div>
+                     
                       <div class="col-md-4"></div>
                     </div>
                     <div class="row">
@@ -848,7 +846,7 @@
                                   <span class="bg-white text-black px-4 py-2" style="border-radius: 3px;">{{invoice.status}}</span>
                                 </div>
                                 <div class="col-6">
-                                  <h4 class="text-white p-2 fw-bold">RECURRING INVOICE</h4>
+                                  <h4 class="text-white p-2 fw-bold">PAYMENT RECIEVED</h4>
                                 </div>
                                 <div class="col-3">
                                   <span class="fw-bold me-2 h5 text-white float-end">#{{invoice.rec_invoice_no}}</span>
@@ -1012,7 +1010,7 @@
                                   <span class="bg-warning text-black px-4 py-2" style="border-radius: 3px;">{{invoice.status}}</span>
                                 </div>
                                 <div class="col-6">
-                                  <h4 class="text-black p-2 fw-bold">RECURRING INVOICE</h4>
+                                  <h4 class="text-black p-2 fw-bold">PAYMENT RECIEVED</h4>
                                 </div>
                                 <div class="col-3">
                                   <span class="fw-bold me-2 h5 text-black float-end"><span class="fw-normal">Rec. Invoice No.</span><br>#{{invoice.rec_invoice_no}}</span>
@@ -1172,7 +1170,7 @@
                           <div class="" id="printdiv3">
                               <div class="row">
                                   <div class="col-sm-12 py-3" style="background-image: linear-gradient(#ffae1f, black); color: white;">
-                                      <p style="font-size: 4vh; text-align: center;">RECURRING INVOICE</p>
+                                      <p style="font-size: 4vh; text-align: center;">PAYMENT RECIEVED</p>
                                       <p style=" text-align: center;"> {{cmp.company_name}} <br>
                                           {{cmp.address}} <br>
                                           {{cmp.city}},
@@ -1360,7 +1358,7 @@
   <div class="modal-dialog">
     <div class="modal-content" style="background-color: #3b3b3b;">
       <div class="modal-header">
-        <h3 class="modal-title text-light" id="exampleModalLabel">Share Recurring Invoice</h3>
+        <h3 class="modal-title text-light" id="exampleModalLabel">Share </h3>
         <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true" style="font-size: x-large;">&times;</span>
         </button>
@@ -1787,7 +1785,7 @@
     var opt =
     {
         margin: 1,
-        filename: 'RecurringInvoice_slip_'+ recInvNo + '.pdf',
+        filename: 'payment_slip'+ recInvNo + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }

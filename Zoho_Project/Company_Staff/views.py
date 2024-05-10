@@ -20388,6 +20388,10 @@ def create_payment(request):
         else:
             com = StaffDetails.objects.get(login_details = log_details).company
 
+        payment_number= request.POST['paymentRecievedNo'].upper()
+        if Payment_recieved.objects.filter(company = com, payment_number__iexact = payment_number).exists():
+            return JsonResponse({'status':False, 'message':'Credit Note No. already Exists.!'})
+
         if request.method == 'POST':
             payment = Payment_recieved(
                 company = com,
@@ -20400,7 +20404,7 @@ def create_payment(request):
                 customer_place_of_supply=request.POST['place_of_supply'],
                 payment_date = request.POST['start_date'],
                 reference_number= request.POST['reference_number'],
-                payment_number= request.POST['paymentRecievedNo'],
+                payment_number= request.POST['paymentRecievedNo'].upper(),
                 payment_method = request.POST['payType'],
                 cheque_number = request.POST['cheque_id'] if request.POST['payType'] == 'Cheque' else '' ,
                 upi_id = request.POST['upi_id'] if request.POST['payType'] == 'UPI' else '',
@@ -20411,9 +20415,9 @@ def create_payment(request):
 
             payment.save()
 
-            if 'Draft' in request.POST:
+            if request.POST['buttonValue'] == 'DRAFT':
                 payment.status = "Draft"
-            elif "Saved" in request.POST:
+            elif request.POST['buttonValue'] == 'SAVE':
                 payment.status = "Saved" 
             payment.save()
             
@@ -20469,7 +20473,20 @@ def create_payment(request):
 
 
 def payment_view(request):
-    return render(request,'zohomodules/payment_recieved/payment_view.html')       
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+    allmodules= ZohoModules.objects.get(company = cmp)
+    payment = Payment_recieved.objects.filter(company = cmp)
+    pymt = Payment_details.objects.filter(company = cmp)
+    return render(request,'zohomodules/payment_recieved/payment_view.html',{'cmp': cmp,'allmodules':allmodules,'payment':payment,'pymt':pymt})       
 
 
 def newCustomerAjax(request):

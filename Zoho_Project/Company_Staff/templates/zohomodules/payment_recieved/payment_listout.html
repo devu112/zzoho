@@ -13,6 +13,7 @@
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <style>
     .bg-dark {
       --bs-bg-opacity: 0;
@@ -45,7 +46,7 @@
                <br>
                <div class="row container-fluid mb-3">
                 <div class="col-md-3">
-                    <input type="text" id="searchInput" class="form-control text-black" style="border-color: rgb(198, 134, 16);background-color: antiquewhite;" placeholder="Search...">
+                    <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control text-black" style="border-color: rgb(198, 134, 16);background-color: antiquewhite;" placeholder="Search...">
                 </div>
                 <div class="col-md-2">
                     <div class="dropdown">
@@ -71,9 +72,9 @@
                             </a>
                             <div class="dropdown-menu m-1" style="background-color: black; color: white;">
                               <!-- Modify the filter dropdown menu -->
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'All')">All</a>
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'Saved')">Saved</a>
-                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable(6, 'Draft')">Draft</a>
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable('All')"  >All</a>
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable('Saved')">Saved</a>
+                              <a class="dropdown-item dropdown-item-filter" href="javascript:void(0);" style="background-color: black; color: white;" onclick="filterTable('Draft')">Draft</a>
 
                             </div>
                         </div>
@@ -87,7 +88,7 @@
                           <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Import</span>
                       </a>
                       <a style="border: 1px solid; border-radius: 5px; height: 2.4rem; display: flex; align-items: center;margin-left: 10px;" onclick="exportToExcel()" class="btn btn-outline-warning" >
-                        <i class="fa fa-file-excel-o p-1" style="font-size: large;"></i>
+                        <i class="fa fa-file-excel-o p-1" style="font-size: large;" onclick="exportToExcel()"></i>
                         <span style="font-size: 2vh; margin-left: 0.5rem;" class="text-center">Export</span>
                     </a>
         
@@ -128,13 +129,13 @@
               {% for p in payment %}
                 <tr style="background-color: rgb(0, 0, 0);border-color:rgba(0, 0, 0, 0.549) rgb(0, 0, 0) rgb(173, 166, 166) rgb(0, 0, 0);text-align: center;" class='clickable-row' data-href="">             
                   <!-- <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;">{{forloop.counter}}</td> -->
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.payment_date }}</td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.payment_number }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.customer.first_name }} {{ p.customer.last_name }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.customer_email }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.amount_to_apply }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.status }}</a></td>
-                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="">{{ p.amount_to_credit }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'payment_view' %}">{{ p.payment_date }}</td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url 'payment_view' %}">{{ p.payment_number }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url  'payment_view' %}">{{ p.customer.first_name }} {{ p.customer.last_name }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url  'payment_view' %}">{{ p.customer_email }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url  'payment_view' %}">{{ p.amount_to_apply }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url  'payment_view' %}">{{ p.status }}</a></td>
+                  <td class="bg-dark text-white" style="color: rgb(0, 0, 0); background-color: black;"><a href="{% url  'payment_view' %}">{{ p.amount_to_credit }}</a></td>
               </tr>
              {% endfor %}
             
@@ -183,16 +184,113 @@ function sortTable(column) {
 
 
 
+<!-- FILTER -->
+<script>
+  function filterTable(filterBy) {
+  // Get all table rows
+  const rows = document.getElementById("data-table").querySelectorAll("tbody tr");
+
+  // Loop through each row
+  for (const row of rows) {
+    // Get the status cell (assuming status is in the 6th column)
+    const statusCell = row.children[5];
+    const status = statusCell.textContent.trim();
+
+    // Show/hide row based on filter
+    if (filterBy === "All" || status === filterBy) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  }
+}
+</script>
+
+<!-- SORTING -->
+<script>
+  function sortTable(sortColumn) {
+  const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+  const rows = Array.from(tableBody.querySelectorAll("tr")); // Convert to array for sorting
+
+  if (sortColumn === "all") {
+    // No sorting, return the original order
+    return rows;
+  } else {
+    // Sort based on the chosen column (name or payment)
+    return rows.sort((rowA, rowB) => {
+      const valueA = rowA.children[sortColumn === "name" ? 2 : 1].textContent.trim().toLowerCase();
+      const valueB = rowB.children[sortColumn === "name" ? 2 : 1].textContent.trim().toLowerCase();
+      return valueA.localeCompare(valueB);
+    });
+  }
+
+  // Update table body only after sorting for other options
+  if (sortColumn !== "all") {
+    tableBody.innerHTML = ""; // Clear existing rows
+    sortedRows.forEach(row => tableBody.appendChild(row));
+  }
+}
+</script>
 
 
+<!-- SEARCH -->
+<script>
+  function searchTable() {
+  const searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
+  const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+  const rows = tableBody.querySelectorAll("tr");
+
+  for (const row of rows) {
+    const allCells = Array.from(row.children);
+    let rowVisible = false;
+
+    for (const cell of allCells) {
+      const cellText = cell.textContent.trim().toLowerCase();
+      if (cellText.indexOf(searchTerm) !== -1) {
+        rowVisible = true;
+        break; // Exit loop if a match is found in any cell
+      }
+    }
+
+    row.style.display = rowVisible ? "" : "none";
+  }
+}
+</script>
 
 
-
-
-
-
-
-
+<!-- EXPORT -->
+<script src="xlsx.min.js"></script>
+<script>
+  function exportToExcel() {
+      const table = document.getElementById("data-table");
+      
+      // Create a new workbook
+      const workbook = XLSX.utils.book_new();
+      
+      // Create a worksheet from the table data
+      const worksheet = XLSX.utils.table_to_sheet(table);
+      
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Payment Data");
+      
+      // Generate Excel file content as a Blob
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      
+      // Create a downloadable link
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "payment_data.xlsx";
+      
+      // Append the link to the body and trigger the click to download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+  }
+  </script>
+  
 
 
 
